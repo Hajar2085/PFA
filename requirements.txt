@@ -2,6 +2,7 @@
 Django==6.0.4
 PyPDF2==3.0.1
 openai==2.33.0
+python-dotenv==1.2.2
 
 # Transitives utiles (versions testées localement)
 asgiref==3.11.1

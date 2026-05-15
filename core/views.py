@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Matiere, Cours, Commentaire, Progression
@@ -133,9 +134,14 @@ def ai_quiz(request):
             
             text = text[:12000]
 
+            if not settings.NVIDIA_API_KEY:
+                raise ValueError(
+                    "NVIDIA_API_KEY manquante. Copiez .env.example vers .env et ajoutez votre clé."
+                )
+
             client = OpenAI(
-              base_url = "https://integrate.api.nvidia.com/v1",
-              api_key = "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"
+                base_url=settings.NVIDIA_API_BASE_URL,
+                api_key=settings.NVIDIA_API_KEY,
             )
 
             prompt = f"""You are an elite academic assessor. Generate a 10-question multiple-choice quiz based ONLY on the CORE ACADEMIC CONCEPTS of the provided text.
@@ -161,7 +167,7 @@ TEXT TO ANALYZE:
 
             # Switched to meta/llama-3.3-70b-instruct for reliability on NVIDIA API
             completion = client.chat.completions.create(
-              model="meta/llama-3.3-70b-instruct",
+              model=settings.NVIDIA_MODEL,
               messages=[{"role":"user","content":prompt}],
               temperature=0.2,
               max_tokens=4000,

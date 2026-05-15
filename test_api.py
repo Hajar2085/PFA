@@ -1,10 +1,20 @@
 import json
-from openai import OpenAI
+import os
 import time
+from pathlib import Path
+
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv(Path(__file__).resolve().parent / '.env')
+
+api_key = os.environ.get('NVIDIA_API_KEY')
+if not api_key:
+    raise SystemExit('Définissez NVIDIA_API_KEY dans le fichier .env')
 
 client = OpenAI(
-  base_url = "https://integrate.api.nvidia.com/v1",
-  api_key = "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"
+    base_url=os.environ.get('NVIDIA_API_BASE_URL', 'https://integrate.api.nvidia.com/v1'),
+    api_key=api_key,
 )
 
 try:

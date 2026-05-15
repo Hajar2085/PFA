@@ -1,10 +1,19 @@
-import json
-from openai import OpenAI
+import os
 import time
+from pathlib import Path
+
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv(Path(__file__).resolve().parent / '.env')
+
+api_key = os.environ.get('NVIDIA_API_KEY')
+if not api_key:
+    raise SystemExit('Définissez NVIDIA_API_KEY dans le fichier .env')
 
 client = OpenAI(
-  base_url = "https://integrate.api.nvidia.com/v1",
-  api_key = "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"
+    base_url=os.environ.get('NVIDIA_API_BASE_URL', 'https://integrate.api.nvidia.com/v1'),
+    api_key=api_key,
 )
 
 def test_model(model_name):
@@ -26,4 +35,3 @@ def test_model(model_name):
 test_model("stepfun-ai/step-3.5-flash")
 test_model("deepseek-ai/deepseek-v4-flash")
 test_model("deepseek-ai/deepseek-v4-pro")
-

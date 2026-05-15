@@ -1,8 +1,20 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
+
+# NVIDIA API (quiz IA)
+NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY', '')
+NVIDIA_API_BASE_URL = os.environ.get(
+    'NVIDIA_API_BASE_URL',
+    'https://integrate.api.nvidia.com/v1',
+)
+NVIDIA_MODEL = os.environ.get('NVIDIA_MODEL', 'meta/llama-3.3-70b-instruct')
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-^+q(*ra-$@z=bd6!o##w&7r)w$*ov6&go-&ean&cps2zse1weg'
