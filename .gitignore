@@ -21,7 +21,9 @@ media/
 
 # Environment / secrets
 .env
-.env.*
+.env.local
+.env.*.local
+!.env.example
 
 # IDE / OS
 .idea/
