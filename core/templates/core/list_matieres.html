@@ -1,0 +1,55 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Accueil - Liste des Matières{% endblock %}
+
+{% block content %}
+<div class="row mb-5 mt-4 justify-content-center">
+    <div class="col-lg-8 text-center">
+        <h1 class="display-4 fw-extrabold mb-3" style="font-weight: 800; letter-spacing: -1px;">
+            Explorez vos <span class="text-gradient">Matières</span>
+        </h1>
+        <p class="lead text-muted fs-5">
+            Accédez à vos cours, consultez vos supports PDF et participez activement à votre réussite académique.
+        </p>
+    </div>
+</div>
+
+{% if user.is_authenticated and user.is_professeur %}
+<div class="row mb-4">
+    <div class="col text-center">
+        <a href="{% url 'ajouter_matiere' %}" class="btn btn-gradient rounded-pill px-4 shadow-sm fw-bold">
+            <i class="bi bi-plus-circle-fill me-2"></i> Ajouter une nouvelle matière
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for matiere in matieres %}
+    <div class="col">
+        <div class="card card-premium h-100">
+            <div class="card-body p-4 p-xl-5 text-center">
+                <div class="icon-gradient mb-4" style="width: 80px; height: 80px; font-size: 2.2rem; font-weight: bold;">
+                    {{ matiere.nom|make_list|first|upper }}
+                </div>
+                <h4 class="card-title fw-bold text-dark mb-3">{{ matiere.nom }}</h4>
+                <p class="card-text text-muted small px-2 mb-4">Des ressources complètes pour maîtriser cette discipline et réussir vos examens.</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center pb-5 pt-0 px-4 px-xl-5">
+                <a href="{% url 'list_cours' matiere.id %}" class="btn btn-outline-custom w-100 stretched-link">
+                    Découvrir les cours <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="d-inline-block p-5 rounded-4 bg-white shadow-sm border border-light">
+            <i class="bi bi-folder2-open display-1 text-muted mb-3 d-block"></i>
+            <h3 class="fw-bold text-dark">Aucune matière</h3>
+            <p class="text-muted mb-0">Le programme n'a pas encore été chargé par l'équipe pédagogique.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

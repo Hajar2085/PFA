@@ -1,0 +1,191 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Votre AI Quiz{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-premium mt-4 mb-5">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="mb-4 text-gradient fw-bold text-center"><i class="bi bi-lightning-charge me-2"></i>Quiz Généré</h2>
+                
+                <div id="quizContainer">
+                    <!-- Les questions seront injectées ici par JS -->
+                </div>
+                
+                <div class="text-center mt-5">
+                    <button class="btn btn-gradient px-5 py-3 fs-5" id="submitQuizBtn">Valider le Quiz</button>
+                </div>
+                
+                <div id="resultContainer" class="mt-5 d-none text-center bg-light p-4 rounded-4 border">
+                    <h3 class="fw-bold mb-3">Votre Score : <span id="scoreDisplay" class="text-gradient" style="font-size: 2.5rem;"></span></h3>
+                    <p class="text-muted fs-5" id="scoreMessage"></p>
+                    <a href="{% url 'ai_quiz' %}" class="btn btn-outline-custom mt-3">
+                        <i class="bi bi-arrow-repeat me-1"></i> Créer un nouveau quiz
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const rawData = '{{ quiz_data|escapejs }}';
+    let quizData = [];
+    try {
+        quizData = JSON.parse(rawData);
+    } catch(e) {
+        console.error("Erreur parsing JSON: ", e);
+    }
+
+    const quizContainer = document.getElementById('quizContainer');
+    const submitBtn = document.getElementById('submitQuizBtn');
+    const resultContainer = document.getElementById('resultContainer');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const scoreMessage = document.getElementById('scoreMessage');
+
+    // Rendu des questions
+    if(quizData && quizData.length > 0) {
+        quizData.forEach((q, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'mb-4 pb-4 border-bottom';
+            qDiv.id = `question-block-${index}`;
+            
+            let htmlInner = `<h5 class="fw-bold mb-3 text-dark"><span class="text-primary me-2">${index + 1}.</span> ${q.question_text}</h5>`;
+            
+            q.options.forEach((opt, optIndex) => {
+                htmlInner += `
+                    <div class="form-check custom-radio mb-2 p-3 border rounded-3 text-start position-relative option-container" style="transition: all 0.2s; cursor: pointer;">
+                        <input class="form-check-input ms-1 mt-1" type="radio" name="q${index}" id="q${index}-opt${optIndex}" value="${optIndex}" style="cursor: pointer;">
+                        <label class="form-check-label w-100 ms-2" for="q${index}-opt${optIndex}" id="label-q${index}-opt${optIndex}" style="cursor: pointer; padding-left: 2rem;">
+                            ${opt}
+                        </label>
+                    </div>
+                `;
+            });
+            
+            htmlInner += `<div class="mt-3 p-3 rounded-3 d-none correction-msg fw-medium" id="correction-q${index}"></div>`;
+            qDiv.innerHTML = htmlInner;
+            quizContainer.appendChild(qDiv);
+
+            // Add click listener on container for better UX
+            setTimeout(() => {
+                for(let optIndex = 0; optIndex < q.options.length; optIndex++){
+                    const optInput = document.getElementById(`q${index}-opt${optIndex}`);
+                    if(optInput) {
+                        optInput.parentElement.addEventListener('click', (e) => {
+                           if(optInput.disabled) return;
+                           optInput.checked = true;
+                           // reset borders
+                           const siblings = document.querySelectorAll(`input[name="q${index}"]`);
+                           siblings.forEach(s => {
+                               s.parentElement.classList.remove('border-primary');
+                               s.parentElement.style.backgroundColor = 'transparent';
+                           });
+                           // add to current
+                           optInput.parentElement.classList.add('border-primary');
+                           optInput.parentElement.style.backgroundColor = 'rgba(79, 70, 229, 0.05)';
+                        });
+                    }
+                }
+            }, 0);
+        });
+    } else {
+        quizContainer.innerHTML = `
+            <div class="alert alert-danger p-4 text-center">
+                <i class="bi bi-exclamation-triangle fs-1 text-danger mb-3"></i>
+                <h5>Erreur: Aucune question n'a pu être générée.</h5>
+                <p>Le document PDF ne contient peut-être pas assez de texte reconnaissable, ou l'IA a retourné un format invalide.</p>
+                <a href="{% url 'ai_quiz' %}" class="btn btn-outline-danger mt-2">Réessayer</a>
+            </div>
+        `;
+        submitBtn.style.display = 'none';
+    }
+
+    // Validation du quiz
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            let score = 0;
+            
+            quizData.forEach((q, index) => {
+                const selectedOpt = document.querySelector(`input[name="q${index}"]:checked`);
+                const correctionDiv = document.getElementById(`correction-q${index}`);
+                correctionDiv.classList.remove('d-none');
+                
+                if (selectedOpt) {
+                    const selectedVal = parseInt(selectedOpt.value);
+                    if (selectedVal === q.correct_answer_index) {
+                        score++;
+                        correctionDiv.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i> Bonne réponse!</span><div class="mt-2 text-dark small"><i class="bi bi-info-circle me-1"></i> <b>Explication:</b> ${q.explanation}</div>`;
+                        correctionDiv.classList.add('bg-success', 'bg-opacity-10');
+                    } else {
+                        correctionDiv.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle-fill me-2 fs-5 align-middle"></i> Faux. La bonne réponse était: <b>${q.options[q.correct_answer_index]}</b></span><div class="mt-2 text-dark small"><i class="bi bi-info-circle me-1"></i> <b>Explication:</b> ${q.explanation}</div>`;
+                        correctionDiv.classList.add('bg-danger', 'bg-opacity-10');
+                    }
+                } else {
+                    correctionDiv.innerHTML = `<span class="text-warning text-dark"><i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i> Vous n'avez pas répondu. La bonne réponse était: <b>${q.options[q.correct_answer_index]}</b></span><div class="mt-2 text-dark small"><i class="bi bi-info-circle me-1"></i> <b>Explication:</b> ${q.explanation}</div>`;
+                    correctionDiv.classList.add('bg-warning', 'bg-opacity-10');
+                }
+                
+                const correctLabel = document.getElementById(`label-q${index}-opt${q.correct_answer_index}`);
+                if (correctLabel) {
+                    const correctParent = correctLabel.parentElement;
+                    correctParent.classList.add('border-success', 'border-2');
+                    correctParent.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    correctLabel.classList.add('text-success', 'fw-bold');
+                }
+
+                if(selectedOpt && parseInt(selectedOpt.value) !== q.correct_answer_index) {
+                    const wrongLabel = document.getElementById(`label-q${index}-opt${selectedOpt.value}`);
+                    const wrongParent = wrongLabel.parentElement;
+                    wrongParent.classList.add('border-danger', 'border-2');
+                    wrongParent.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    wrongLabel.classList.add('text-danger', 'fw-bold');
+                }
+                
+                // Disable all inputs
+                document.querySelectorAll(`input[name="q${index}"]`).forEach(input => input.disabled = true);
+            });
+            
+            // Hide submit button and show results
+            submitBtn.style.display = 'none';
+            resultContainer.classList.remove('d-none');
+            scoreDisplay.textContent = `${score} / ${quizData.length}`;
+            
+            if(score === quizData.length) {
+                scoreMessage.innerHTML = "<span class='text-success fw-bold'>Exceptionnel !</span> Vous maîtrisez parfaitement le sujet.";
+            } else if(score >= quizData.length * 0.7) {
+                scoreMessage.innerHTML = "<span class='text-primary fw-bold'>Très bien !</span> Vous avez retenu l'essentiel du document.";
+            } else if(score >= quizData.length * 0.5) {
+                scoreMessage.textContent = "Pas mal, mais une petite relecture ne ferait pas de mal !";
+            } else {
+                scoreMessage.textContent = "Il semble que certains points vous ont échappé. N'hésitez pas à relire le document !";
+            }
+            
+            // Scroll to results
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
+</script>
+
+<style>
+    .custom-radio .form-check-input {
+        width: 1.25em;
+        height: 1.25em;
+    }
+    .custom-radio .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    .text-success { color: #10b981 !important; }
+    .text-danger { color: #ef4444 !important; }
+    .border-primary { border-color: var(--primary) !important; }
+    .border-success { border-color: #10b981 !important; }
+    .border-danger { border-color: #ef4444 !important; }
+    
+    .option-container:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1 !important;
+    }
+</style>
+{% endblock %}

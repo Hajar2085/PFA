@@ -1,0 +1,100 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Cours de {{ matiere.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-5 mt-4">
+    <a href="{% url 'list_matieres' %}" class="btn btn-light rounded-circle shadow-sm me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" onmouseover="this.classList.add('bg-primary','text-white')" onmouseout="this.classList.remove('bg-primary','text-white')">
+        <i class="bi bi-arrow-left fs-5"></i>
+    </a>
+    <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-1 small fw-medium">
+            <li class="breadcrumb-item"><a href="{% url 'list_matieres' %}" class="text-decoration-none text-muted">Matières</a></li>
+            <li class="breadcrumb-item active text-primary fw-bold" aria-current="page">{{ matiere.nom }}</li>
+          </ol>
+        </nav>
+        <h2 class="fw-extrabold mb-0" style="font-weight: 800;">Programme <span class="text-gradient">{{ matiere.nom }}</span></h2>
+    </div>
+    {% if user.is_authenticated and user.is_professeur %}
+    <div class="ms-auto">
+        <a href="{% url 'ajouter_cours' %}?matiere={{ matiere.id }}" class="btn btn-gradient rounded-pill px-4 shadow-sm fw-bold">
+            <i class="bi bi-file-earmark-plus-fill me-2"></i> Ajouter un cours
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-xl-10 mx-auto">
+        {% if videos %}
+        <div class="card card-premium border-0 mb-4">
+            <div class="card-body p-4 p-xl-5">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="fw-bold mb-0">Vidéos YouTube — {{ matiere.nom }}</h4>
+                    <span class="badge bg-light text-dark border">{{ videos|length }}</span>
+                </div>
+                <div class="row g-3">
+                    {% for v in videos %}
+                    <div class="col-12 col-md-6">
+                        <a href="{{ v.youtube_url }}" target="_blank" rel="noopener noreferrer"
+                           class="d-flex align-items-start gap-3 p-3 rounded-4 border text-decoration-none"
+                           style="background: white; transition: all 0.2s;"
+                           onmouseover="this.style.backgroundColor='#f8fafc'"
+                           onmouseout="this.style.backgroundColor='white'">
+                            <div class="icon-gradient shadow-sm" style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px;">
+                                <i class="bi bi-youtube fs-3 opacity-75"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-dark">{{ v.titre }}</div>
+                                <div class="text-muted small mt-1">Ouvrir sur YouTube</div>
+                            </div>
+                            <div class="text-muted">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card card-premium border-0">
+            <div class="list-group list-group-flush rounded-4">
+                {% for c in cours %}
+                <a href="{% url 'detail_cours' c.id %}" class="list-group-item list-group-item-action p-4 d-flex align-items-center justify-content-between border-bottom" style="transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='white'">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-gradient me-4 shadow-sm" style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 18px;">
+                            <i class="bi bi-file-earmark-richtext-fill fs-3 opacity-75"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1 fw-bold text-dark fs-5">{{ c.titre }}</h5>
+                            <div class="text-muted small d-flex flex-wrap align-items-center mt-2 gap-3">
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-calendar-event me-2 text-primary"></i> 
+                                    {{ c.date_ajout|date:"d M Y" }}
+                                </span>
+                                <span class="d-flex align-items-center px-2 py-1 bg-light rounded-3 shadow-sm border border-light">
+                                    <i class="bi bi-chat-dots-fill text-secondary me-2"></i>
+                                    <span class="fw-bold text-dark me-1">{{ c.commentaires.count }}</span> échanges
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-none d-md-block ms-4">
+                        <span class="btn btn-outline-custom rounded-pill px-4">Ouvrir <i class="bi bi-arrow-right-short ms-1"></i></span>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="bi bi-journal-x display-1 text-muted mb-3 d-block opacity-50"></i>
+                    <h4 class="text-muted fw-bold">Aucun cours publié</h4>
+                    <p class="text-muted mb-0 small">Les supports pédagogiques pour cette matière n'ont pas encore été mis en ligne.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

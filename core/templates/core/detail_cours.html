@@ -1,0 +1,138 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ cours.titre }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 mt-3">
+    <a href="{% url 'list_cours' cours.matiere.id %}" class="btn btn-light rounded-circle shadow-sm me-3" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" onmouseover="this.classList.add('bg-primary','text-white')" onmouseout="this.classList.remove('bg-primary','text-white')">
+        <i class="bi bi-arrow-left fs-5"></i>
+    </a>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small fw-medium">
+        <li class="breadcrumb-item"><a href="{% url 'list_matieres' %}" class="text-decoration-none text-muted">Matières</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'list_cours' cours.matiere.id %}" class="text-decoration-none text-muted">{{ cours.matiere.nom }}</a></li>
+        <li class="breadcrumb-item active text-primary fw-bold" aria-current="page">Lecture du cours</li>
+      </ol>
+    </nav>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <!-- Colonne Principale: Contenu du cours -->
+    <div class="col-lg-8">
+        <div class="card card-premium mb-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="badge badge-soft-primary px-3 py-2 rounded-pill mb-3 fw-bold shadow-sm border border-primary border-opacity-10">{{ cours.matiere.nom }}</div>
+                <h1 class="fw-extrabold mb-4 text-dark" style="font-weight: 800; line-height: 1.2;">{{ cours.titre }}</h1>
+                
+                {% if cours.fichier_pdf %}
+                <div class="p-5 text-center mb-4 mt-4" style="background: linear-gradient(135deg, rgba(236,72,153,0.03), rgba(79,70,229,0.05)); border: 2px dashed rgba(79,70,229,0.15); border-radius: 24px; transition: all 0.3s;" onmouseover="this.style.borderColor='rgba(79,70,229,0.4)'; this.style.backgroundColor='rgba(79,70,229,0.08)'" onmouseout="this.style.borderColor='rgba(79,70,229,0.15)'; this.style.backgroundColor='linear-gradient(135deg, rgba(236,72,153,0.03), rgba(79,70,229,0.05))'">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger mb-4 shadow-sm rounded-circle bg-white d-inline-flex align-items-center justify-content-center" style="font-size: 3rem; width: 100px; height: 100px;"></i>
+                    <h4 class="fw-bold text-dark">Support de référence</h4>
+                    <p class="text-muted mb-4 mx-auto" style="max-width: 400px; font-size: 0.95rem;">Ce document pdf contient l'intégralité du chapitre, incluant les exercices et les annexes pédagogiques.</p>
+                    <a href="{{ cours.fichier_pdf.url }}" target="_blank" class="btn btn-gradient px-5 py-3 rounded-pill fw-bold shadow-sm d-inline-flex align-items-center">
+                        <i class="bi bi-cloud-arrow-down-fill me-2 fs-5"></i> Consulter le document PDF
+                    </a>
+                </div>
+                {% else %}
+                <div class="alert alert-warning border-0 rounded-4 shadow-sm mb-4 p-4 d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-warning"></i>
+                    <div>
+                        <h5 class="mb-1 fw-bold text-dark">Support manquant</h5>
+                        <p class="mb-0 small text-muted">Le professeur n'a pas encore mis en ligne de document PDF pour ce cours.</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Gestion de la progression (Étudiant Uniquement) -->
+                {% if user.is_authenticated and user.is_etudiant %}
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between p-4 rounded-4 shadow-sm mt-5" style="background: var(--surface); border: 2px solid {% if progression and progression.est_termine %}#10b981{% else %}#f1f5f9{% endif %}; transition: all 0.3s;">
+                    <div class="mb-3 mb-md-0">
+                        <h5 class="mb-1 fw-bold {% if progression and progression.est_termine %}text-success{% else %}text-dark{% endif %}">
+                            <i class="bi {% if progression and progression.est_termine %}bi-check-circle-fill{% else %}bi-award{% endif %} me-1"></i>
+                            Statut de complétion
+                        </h5>
+                        <p class="text-muted mb-0 small">Indiquez au système que vous avez assimilé cette leçon.</p>
+                    </div>
+                    {% if progression and progression.est_termine %}
+                    <span class="badge bg-success py-3 px-4 fs-6 rounded-pill d-flex align-items-center shadow-sm border border-success">
+                        <i class="bi bi-check2-all me-2 fs-5"></i> Assimilé avec succès
+                    </span>
+                    {% else %}
+                    <form action="{% url 'marquer_termine' cours.id %}" method="post" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success rounded-pill px-4 py-3 fw-bold shadow-sm d-flex align-items-center" style="transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                            <i class="bi bi-check-lg me-2 fs-5"></i> Marquer comme terminé
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Colonne Latérale: Commentaires -->
+    <div class="col-lg-4">
+        <div class="card card-premium sticky-top" style="top: 110px; border: 1px solid rgba(0,0,0,0.05);">
+            <div class="card-header bg-white border-bottom pt-4 pb-3 px-4">
+                <h5 class="fw-bold d-flex align-items-center mb-0 text-dark">
+                    <i class="bi bi-chat-square-text-fill text-primary me-2"></i> Discussions
+                    <span class="badge bg-primary text-white ms-auto rounded-circle">{{ commentaires.count }}</span>
+                </h5>
+            </div>
+            
+            <div class="card-body p-0 d-flex flex-column" style="max-height: calc(100vh - 120px);">
+                <!-- Comment List -->
+                <div class="comments-list p-4 flex-grow-1 overflow-auto" style="scroll-behavior: smooth;">
+                    {% for c in commentaires %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded-circle {% if c.auteur.is_professeur %}bg-danger{% else %}bg-primary{% endif %} text-white d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 35px; height: 35px; font-size: 0.85rem; font-weight: bold;">
+                                {{ c.auteur.username|make_list|first|upper }}
+                            </div>
+                            <div class="fw-bold small text-dark me-2">{{ c.auteur.username }}</div>
+                            {% if c.auteur.is_professeur %}<span class="badge badge-soft-danger border border-danger border-opacity-10" style="font-size: 0.65rem;">Enseignant</span>{% endif %}
+                            <div class="text-muted ms-auto" style="font-size: 0.70rem;"><i class="bi bi-clock me-1"></i>{{ c.date_creation|date:"H:i, d M" }}</div>
+                        </div>
+                        <div class="p-3 rounded-4 shadow-sm ms-2" style="background: {% if c.auteur.is_professeur %}rgba(239, 68, 68, 0.05){% else %}#f8fafc{% endif %}; font-size: 0.9rem; border: 1px solid rgba(0,0,0,0.03); border-top-left-radius: 4px !important;">
+                            {{ c.texte|linebreaksbr }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-chat-dots-fill text-light display-4 mb-3 d-block"></i>
+                        <p class="text-muted small fw-medium px-4">Aucun échange. Posez la première question au professeur !</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Comment Form -->
+                <div class="p-4 bg-light border-top">
+                    {% if user.is_authenticated %}
+                    <form action="{% url 'ajouter_commentaire' cours.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-0 position-relative">
+                            <textarea name="texte" class="form-control form-control-custom shadow-sm" rows="2" placeholder="Exprimez-vous..." required style="resize: none; padding-right: 55px;"></textarea>
+                            <button type="submit" class="btn btn-primary rounded-circle position-absolute shadow-sm" style="right: 10px; bottom: 10px; width: 38px; height: 38px; padding: 0; display:flex; align-items:center; justify-content:center; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">
+                                <i class="bi bi-send-fill fs-6"></i>
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-secondary mb-0 text-center rounded-4 border-0 py-3 shadow-sm">
+                        <i class="bi bi-lock-fill me-1"></i> <small><a href="{% url 'login' %}?next={{ request.path }}" class="fw-bold text-primary text-decoration-none">Connectez-vous</a> pour participer.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* Styling scrollbar in comments area for webkit */
+    .comments-list::-webkit-scrollbar { width: 6px; }
+    .comments-list::-webkit-scrollbar-track { background: transparent; }
+    .comments-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    .comments-list::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+</style>
+{% endblock %}
